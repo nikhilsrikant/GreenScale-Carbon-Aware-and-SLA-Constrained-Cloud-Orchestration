@@ -2,7 +2,7 @@
 
 GreenScale is a cloud-native research prototype for carbon-aware, cost-aware, and service-level-objective-constrained workload orchestration across simulated multi-cloud regions. The system evaluates how workload placement decisions can be made by jointly considering latency, estimated carbon intensity, execution cost, cold-start risk, and application-level service constraints.
 
-The project is designed as a PhD-level cloud computing systems prototype. It includes a containerized orchestration layer, regional worker services, Kubernetes deployment manifests, observability through Prometheus and Grafana, automated experiment execution, baseline comparison tooling, and advanced scheduler extensions including Pareto-based multi-objective optimization and reinforcement-learning-based scheduling.
+The project is designed as cloud computing systems prototype. It includes a containerized orchestration layer, regional worker services, Kubernetes deployment manifests, observability through Prometheus and Grafana, automated experiment execution, baseline comparison tooling, and advanced scheduler extensions including Pareto-based multi-objective optimization and reinforcement-learning-based scheduling.
 
 ---
 
