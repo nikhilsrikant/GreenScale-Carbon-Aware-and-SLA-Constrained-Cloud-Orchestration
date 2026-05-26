@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: greenscale-orchestrator
+  namespace: {{ include "greenscale.namespace" . }}
+spec:
+  replicas: {{ .Values.orchestrator.replicas }}
+  selector:
+    matchLabels:
+      app: greenscale-orchestrator
+  template:
+    metadata:
+      labels:
+        app: greenscale-orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: {{ include "greenscale.orchestratorImage" . }}
+          imagePullPolicy: {{ .Values.images.orchestrator.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: greenscale-config
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.orchestrator.resources | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: greenscale-orchestrator
+  namespace: {{ include "greenscale.namespace" . }}
+spec:
+  type: {{ .Values.orchestrator.service.type }}
+  selector:
+    app: greenscale-orchestrator
+  ports:
+    - port: {{ .Values.orchestrator.service.port }}
+      targetPort: 8080
+      name: http

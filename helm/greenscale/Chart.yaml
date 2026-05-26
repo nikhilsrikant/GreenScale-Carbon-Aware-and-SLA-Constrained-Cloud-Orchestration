@@ -1,0 +1,6 @@
+apiVersion: v2
+name: greenscale
+description: GreenScale carbon-aware SLA-constrained cloud orchestrator
+version: 0.2.0
+appVersion: "0.2.0"
+type: application

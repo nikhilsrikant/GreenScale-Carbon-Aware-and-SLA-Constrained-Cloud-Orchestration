@@ -41,7 +41,7 @@ class CarbonAwareScheduler:
         self.weights = weights.normalized()
         self.strict_slo = strict_slo
 
-    async def rank(self, request: WorkloadRequest) -> list[RegionScore]:
+    async def rank(self, request: WorkloadRequest, workload: str | None = None) -> list[RegionScore]:
         carbon_values: dict[str, float] = {}
         for region in self.regions:
             carbon_values[region.name] = await self.carbon_provider.get_carbon_intensity(
@@ -105,8 +105,8 @@ class CarbonAwareScheduler:
                 return feasible + [score for score in ranked if score.slo_violation_risk]
         return ranked
 
-    async def choose(self, request: WorkloadRequest) -> RegionScore:
-        ranked = await self.rank(request)
+    async def choose(self, request: WorkloadRequest, workload: str | None = None) -> RegionScore:
+        ranked = await self.rank(request, workload)
         if not ranked:
             raise RuntimeError("No candidate regions are available")
         return ranked[0]

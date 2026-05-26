@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: greenscale-config
+  namespace: {{ include "greenscale.namespace" . }}
+data:
+  STRICT_SLO: {{ .Values.scheduler.strictSlo | quote }}
+  SCHEDULER_POLICY: {{ .Values.scheduler.policy | quote }}
+  SCHEDULER_ALPHA_LATENCY: {{ .Values.scheduler.weights.latency | quote }}
+  SCHEDULER_BETA_COST: {{ .Values.scheduler.weights.cost | quote }}
+  SCHEDULER_GAMMA_CARBON: {{ .Values.scheduler.weights.carbon | quote }}
+  SCHEDULER_DELTA_COLDSTART: {{ .Values.scheduler.weights.coldStart | quote }}
+  RL_EPSILON: {{ .Values.scheduler.rl.epsilon | quote }}
+  RL_LEARNING_RATE: {{ .Values.scheduler.rl.learningRate | quote }}
+  RL_DISCOUNT: {{ .Values.scheduler.rl.discount | quote }}
+  RL_QTABLE_PATH: {{ .Values.scheduler.rl.qtablePath | quote }}
+  ELECTRICITY_MAPS_TOKEN: {{ .Values.carbon.electricityMapsToken | quote }}
+  CARBON_CACHE_TTL_SECONDS: {{ .Values.carbon.cacheTtlSeconds | quote }}
+  CARBON_API_TIMEOUT_SECONDS: {{ .Values.carbon.apiTimeoutSeconds | quote }}
+  REGION_ENDPOINTS: |
+{{ include "greenscale.regionEndpoints" . | indent 4 }}

@@ -1,8 +1,10 @@
 .env
 .venv/
 __pycache__/
+.pytest_cache/
 *.pyc
 results/
 *.zip
 *.log
 .DS_Store
+.kube/

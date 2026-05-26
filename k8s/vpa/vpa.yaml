@@ -1,0 +1,51 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: greenscale-orchestrator-vpa
+  namespace: greenscale
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: greenscale-orchestrator
+  updatePolicy:
+    updateMode: "Off"
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: aws-worker-vpa
+  namespace: greenscale
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: aws-worker
+  updatePolicy:
+    updateMode: "Off"
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: azure-worker-vpa
+  namespace: greenscale
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: azure-worker
+  updatePolicy:
+    updateMode: "Off"
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: gcp-worker-vpa
+  namespace: greenscale
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gcp-worker
+  updatePolicy:
+    updateMode: "Off"

@@ -18,6 +18,7 @@ class CarbonProvider:
 
     token: str | None = None
     ttl_seconds: int = 900
+    timeout_seconds: float = 3.0
     _cache: dict[str, tuple[float, float]] = field(default_factory=dict)
 
     async def get_carbon_intensity(self, zone: str | None, fallback: float) -> float:
@@ -33,7 +34,7 @@ class CarbonProvider:
         headers = {"auth-token": self.token}
         params = {"zone": zone}
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
+            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
                 response = await client.get(url, headers=headers, params=params)
                 response.raise_for_status()
                 data = response.json()

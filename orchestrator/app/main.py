@@ -21,6 +21,8 @@ from .metrics import (
     WORKER_LATENCY,
 )
 from .models import InvocationResult, WorkloadRequest
+from .pareto import ParetoAwareScheduler
+from .rl_scheduler import EpsilonGreedyRLScheduler
 from .scheduler import CarbonAwareScheduler, SchedulerWeights
 from .settings import get_settings
 
@@ -33,8 +35,12 @@ async def lifespan(app: FastAPI):
         raise RuntimeError("No regions configured. Set REGION_ENDPOINTS.")
     app.state.settings = settings
     app.state.regions = regions
-    app.state.carbon_provider = CarbonProvider(settings.electricity_maps_token)
-    app.state.scheduler = CarbonAwareScheduler(
+    app.state.carbon_provider = CarbonProvider(
+        token=settings.electricity_maps_token,
+        ttl_seconds=settings.carbon_cache_ttl_seconds,
+        timeout_seconds=settings.carbon_api_timeout_seconds,
+    )
+    base_scheduler = CarbonAwareScheduler(
         regions=regions,
         carbon_provider=app.state.carbon_provider,
         weights=SchedulerWeights(
@@ -45,6 +51,19 @@ async def lifespan(app: FastAPI):
         ),
         strict_slo=settings.strict_slo,
     )
+    policy = settings.scheduler_policy.strip().lower()
+    if policy == "rl":
+        app.state.scheduler = EpsilonGreedyRLScheduler(
+            base_scheduler=base_scheduler,
+            epsilon=settings.rl_epsilon,
+            learning_rate=settings.rl_learning_rate,
+            discount=settings.rl_discount,
+            qtable_path=settings.rl_qtable_path,
+        )
+    elif policy == "pareto":
+        app.state.scheduler = ParetoAwareScheduler(base_scheduler)
+    else:
+        app.state.scheduler = base_scheduler
     yield
 
 
@@ -62,6 +81,7 @@ async def health() -> dict[str, Any]:
         "status": "ok",
         "configured_regions": [region.name for region in app.state.regions],
         "strict_slo": app.state.settings.strict_slo,
+        "scheduler_policy": app.state.settings.scheduler_policy,
         "weights": {
             "latency": app.state.scheduler.weights.alpha_latency,
             "cost": app.state.scheduler.weights.beta_cost,
@@ -73,8 +93,15 @@ async def health() -> dict[str, Any]:
 
 @app.get("/regions")
 async def regions() -> list[dict[str, Any]]:
-    ranked = await app.state.scheduler.rank(WorkloadRequest())
+    ranked = await app.state.scheduler.rank(WorkloadRequest(), workload="region-preview")
     return [score.model_dump(mode="json") for score in ranked]
+
+
+@app.get("/scheduler/qtable")
+async def scheduler_qtable() -> dict[str, Any]:
+    if hasattr(app.state.scheduler, "export_qtable"):
+        return {"policy": app.state.settings.scheduler_policy, "q_table": app.state.scheduler.export_qtable()}
+    return {"policy": app.state.settings.scheduler_policy, "q_table": {}}
 
 
 @app.post("/invoke/{workload}", response_model=InvocationResult)
@@ -82,7 +109,7 @@ async def invoke(workload: str, request: WorkloadRequest) -> InvocationResult:
     started = time.perf_counter()
     REQUESTS_TOTAL.labels(workload=workload, priority=request.priority.value).inc()
 
-    ranked = await app.state.scheduler.rank(request)
+    ranked = await app.state.scheduler.rank(request, workload=workload)
     if not ranked:
         raise HTTPException(status_code=503, detail="No candidate regions are available")
 
@@ -91,6 +118,8 @@ async def invoke(workload: str, request: WorkloadRequest) -> InvocationResult:
         worker_started = time.perf_counter()
         try:
             worker_response = await call_worker(selected.region.url, workload, request)
+            if hasattr(app.state.scheduler, "observe"):
+                app.state.scheduler.observe(request, workload, selected, worker_response, success=True)
             observed_worker_seconds = time.perf_counter() - worker_started
             WORKER_LATENCY.labels(workload=workload, region=selected.region.name).observe(observed_worker_seconds)
             DECISIONS_TOTAL.labels(

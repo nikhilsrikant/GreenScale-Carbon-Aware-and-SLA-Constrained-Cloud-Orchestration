@@ -252,3 +252,22 @@ docs/MILESTONE_5_CLOUD_DEPLOYMENT.md
 docs/CLOUD_COST_SAFETY.md
 docs/CLOUD_COMMAND_CHEATSHEET.md
 ```
+
+## Advanced research extensions
+
+This repository now includes advanced cloud-systems extensions:
+
+- Reinforcement-learning scheduler mode: `SCHEDULER_POLICY=rl`
+- Pareto multi-objective scheduler mode: `SCHEDULER_POLICY=pareto`
+- Live carbon-intensity integration through `ELECTRICITY_MAPS_TOKEN`
+- Kubernetes Metrics Server install scripts for real HPA metrics
+- VPA recommendation manifests under `k8s/vpa/`
+- Helm chart under `helm/greenscale/`
+- GitHub Actions CI/CD under `.github/workflows/advanced-ci.yml`
+- Baseline comparison scripts for latency-only, carbon-only, cost-only, weighted, Pareto, and RL policies
+
+See:
+
+- `docs/MILESTONE_8_ADVANCED_SYSTEMS.md`
+- `docs/REAL_CLOUD_DEPLOYMENT.md`
+- `docs/BASELINE_COMPARISON.md`
